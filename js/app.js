@@ -160,6 +160,7 @@
   function revealCards() {
     var cards = UIKit.qsa('.card');
     var jours = UIKit.qsa('.cal-day');
+    var calendar = UIKit.qs('#calendrier');
     var viewportHeight = window.innerHeight;
     var tallest = 0;
     var cardTops = [];
@@ -170,13 +171,14 @@
       tallest = Math.max(tallest, cards[i].offsetHeight);
       cardTops.push(cards[i].getBoundingClientRect().top);
     }
-    for (var k = 0; k < jours.length; k++) {
+    // Les 53 colonnes du calendrier partagent les mêmes sept positions verticales.
+    for (var k = 0; k < Math.min(7, jours.length); k++) {
       var box = jours[k].getBoundingClientRect();
       var d = Math.abs(box.top - viewportHeight / 2);
       dayOpacities.push(String(Math.max(0.15, 1 - d / viewportHeight)));
     }
 
-    // Éviter les écritures identiques, qui déclenchent aussi l'observateur DOM.
+    // Éviter les écritures de styles identiques.
     var minHeight = tallest + 'px';
     var heightChanged = false;
     for (var j = 0; j < cards.length; j++) {
@@ -193,9 +195,10 @@
         cards[j].style.transform = transform;
       }
     }
-    for (var n = 0; n < jours.length; n++) {
-      if (jours[n].style.opacity !== dayOpacities[n]) {
-        jours[n].style.opacity = dayOpacities[n];
+    for (var n = 0; calendar && n < dayOpacities.length; n++) {
+      var property = '--day-opacity-' + n;
+      if (calendar.style.getPropertyValue(property) !== dayOpacities[n]) {
+        calendar.style.setProperty(property, dayOpacities[n]);
       }
     }
     // La hauteur peut déplacer les cartes et le calendrier : mesurer à l'image suivante.
